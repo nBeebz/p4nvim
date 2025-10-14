@@ -75,6 +75,9 @@ local P4 = {
 	end,
 }
 
+local exec = require("p4_commands")
+local ui = require("p4_ui")
+
 P4.store = {
 	Info = function(info)
 		P4.info = info
@@ -124,9 +127,6 @@ P4.store = {
 		end)
 	end,
 }
-
-local exec = require("p4_commands")
-local ui = require("p4_ui")
 
 P4.cmd = {
 	Refresh = function()

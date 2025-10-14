@@ -305,6 +305,7 @@ P4.setup = function(opts)
 	})
 
 	-- TODO: register vim commands
+	return P4
 end
 
 P4.Status = function()

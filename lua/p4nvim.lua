@@ -298,7 +298,7 @@ P4.setup = function(opts)
 				local filename = vim.api.nvim_buf_get_name(args.buf)
 				local readonly = vim.fn.filewritable(filename) == 0
 				if readonly then
-					P4.cmd.Edit(filename)
+					P4.cmd.EditFile(filename)
 				end
 			end
 		end,

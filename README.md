@@ -8,7 +8,7 @@ LazyVim:
 return { 'nbeebz/p4nvim' }
 ```
 
-As it maintains a local cache of data it is recommended to bind to a global
+As it maintains a local cache of data it is recommended to bind to a global in your init.lua
 ```
 P4 = require('p4nvim').setup()
 ```

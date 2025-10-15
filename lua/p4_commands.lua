@@ -58,7 +58,7 @@ M.changes = {
 		{ file = "%s", revision = "%s" },
 	},
 	default = { me = true, status = "pending" },
-	array = "files",
+	list = true,
 }
 
 -- ... Client

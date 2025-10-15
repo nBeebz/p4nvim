@@ -107,9 +107,16 @@ P4.store = {
 	end,
 
 	Changes = function(changes)
-		for _, change in ipairs(changes) do
-			P4.changes[change.change] = change
-			exec.opened({ change = change }, function(files) end)
+		for _, spec in ipairs(changes) do
+			P4.changes[spec.change] = spec
+			exec.describe({ change = spec.change }, function(change)
+				if change then
+					P4.changes[spec.change].shelved = change.files
+				end
+			end)
+			exec.opened({ change = spec.change }, function(files)
+				P4.changes[spec.change].opened = files
+			end)
 		end
 	end,
 
@@ -160,7 +167,7 @@ P4.cmd = {
 	end,
 
 	PickChange = function(prompt, handler)
-		ui.select_change(P4.Changes(), { prompt = prompt or "Select P4 Client" }, handler or function(change)
+		ui.select_change(P4.Changes(P4.client), { prompt = prompt or "Select P4 Client" }, handler or function(change)
 			if change then
 				P4.cmd.SetChange(change.change)
 			end

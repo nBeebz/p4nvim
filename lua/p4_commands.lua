@@ -58,7 +58,7 @@ M.changes = {
 		{ file = "%s", revision = "%s" },
 	},
 	default = { me = true, status = "pending" },
-	array = "files",
+	list = true,
 }
 
 -- ... Client
@@ -98,6 +98,7 @@ M.client = {
 -- ... Description
 M.clients = {
 	args = { me = "--me", stream = "-S %s", user = "-u %s" },
+	default = { me = true },
 	list = true,
 }
 

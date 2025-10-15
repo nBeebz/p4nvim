@@ -6,6 +6,7 @@ local P4 = {
 		default_desc = "A CL has no name",
 		windows = true,
 		auto_open = true,
+		auto_cwd = true,
 		auto_merge = true,
 		path = "C:\\Program Files\\Perforce",
 	},
@@ -49,7 +50,6 @@ local P4 = {
 	end,
 
 	Clients = function(user)
-		user = user or P4.user
 		local clients = {}
 		for client, spec in pairs(P4.clients) do
 			if user == nil or spec.Owner == user then
@@ -64,7 +64,6 @@ local P4 = {
 	end,
 
 	Changes = function(client)
-		client = client or P4.client
 		local changes = {}
 		for change, spec in pairs(P4.changes) do
 			if client == nil or spec.client == client then
@@ -110,6 +109,7 @@ P4.store = {
 	Changes = function(changes)
 		for _, change in ipairs(changes) do
 			P4.changes[change.change] = change
+			exec.opened({ change = change }, function(files) end)
 		end
 	end,
 
@@ -135,17 +135,19 @@ P4.cmd = {
 
 	SetClient = function(client)
 		P4.client = client
-		local spec = P4.Clients(client)
-		if spec and P4.opts.auto_cwd then
+		local spec = P4.Client(client)
+		if spec and spec.Root and P4.opts.auto_cwd then
 			vim.fn.chdir(spec.Root)
-			vim.notify(spec.Root .. " is now CWD")
+			vim.notify(client .. " -> " .. spec.Root)
 		end
 		vim.cmd("redrawstatus")
 	end,
 
 	PickClient = function(prompt, handler)
 		ui.select_client(P4.Clients(), { prompt = prompt or "Select P4 Client" }, handler or function(client)
-			P4.cmd.SetClient(client.client)
+			if client then
+				P4.cmd.SetClient(client.client)
+			end
 		end)
 	end,
 

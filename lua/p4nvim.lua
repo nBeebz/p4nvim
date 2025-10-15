@@ -154,6 +154,9 @@ P4.cmd = {
 		ui.select_client(P4.Clients(), { prompt = prompt or "Select P4 Client" }, handler or function(client)
 			if client then
 				P4.cmd.SetClient(client.client)
+				if not P4.change or P4.change == 0 then
+					P4.cmd.PickChange()
+				end
 			end
 		end)
 	end,
@@ -167,11 +170,15 @@ P4.cmd = {
 	end,
 
 	PickChange = function(prompt, handler)
-		ui.select_change(P4.Changes(P4.client), { prompt = prompt or "Select P4 Client" }, handler or function(change)
-			if change then
-				P4.cmd.SetChange(change.change)
+		ui.select_change(
+			P4.Changes(P4.client),
+			{ prompt = prompt or "Select P4 changelist" },
+			handler or function(change)
+				if change then
+					P4.cmd.SetChange(change.change)
+				end
 			end
-		end)
+		)
 	end,
 
 	NewChange = function(client, desc)

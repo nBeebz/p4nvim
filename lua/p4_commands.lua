@@ -1,5 +1,7 @@
 local M = {}
 
+M.Executing = 0
+
 -- ... Change
 -- ... Date
 -- ... Client
@@ -134,7 +136,6 @@ M.depots = {
 -- ... client
 M.describe = {
 	args = { { short = "-s", added = "-a", shelved = "-S", original = "-O %s" }, { change = "%d" } },
-	default = { short = true, shelved = true },
 	array = "files",
 }
 
@@ -366,7 +367,7 @@ M.unshelve = {
 M.users = { args = {} }
 
 local function MakeCommand(name, spec, args)
-	args = args or {}
+	args = args or spec.default
 	local cmd = { "p4" }
 
 	if not args.raw then
@@ -379,7 +380,6 @@ local function MakeCommand(name, spec, args)
 	end
 	table.insert(cmd, name)
 
-	args = vim.tbl_extend("force", spec.default or {}, args)
 	local function appendArgs(arglist)
 		for name, fmt in pairs(arglist) do
 			if args[name] then
@@ -453,26 +453,32 @@ local parse = function(result, args, cmd)
 end
 
 for cmd, t in pairs(M) do
-	setmetatable(t, {
-		__call = function(t, args, handler)
-			if vim.fn.executable("p4") == 0 then
-				vim.notify("No Perforce installation found")
-				return
-			end
-			args = args or {}
-			local command = MakeCommand(cmd, t, args)
-			local opts = { stdin = args.stdin }
-			if handler then
-				return vim.system(command, opts, function(result)
-					vim.schedule(function()
-						handler(parse(result, args, t))
+	if type(t) == "table" then
+		setmetatable(t, {
+			__call = function(t, args, handler)
+				if vim.fn.executable("p4") == 0 then
+					vim.notify("No Perforce installation found")
+					return
+				end
+				args = args or {}
+				local command = MakeCommand(cmd, t, args)
+				local opts = { stdin = args.stdin }
+				-- P(command, "test")
+				M.Executing = M.Executing + 1
+				if handler then
+					return vim.system(command, opts, function(result)
+						vim.schedule(function()
+							M.Executing = M.Executing - 1
+							handler(parse(result, args, t))
+						end)
 					end)
-				end)
-			else
-				return parse(vim.system(command, opts):wait(), result, args, t)
-			end
-		end,
-	})
+				else
+					M.Executing = M.Executing - 1
+					return parse(vim.system(command, opts):wait(), result, args, t)
+				end
+			end,
+		})
+	end
 end
 
 return M

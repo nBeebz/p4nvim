@@ -17,9 +17,9 @@ local P4 = {
 	clients = {},
 	changes = {},
 
-	user = "",
-	client = "",
-	change = 0,
+	user = nil,
+	client = nil,
+	change = nil,
 
 	User = function(user)
 		return P4.users[user or P4.user]
@@ -109,12 +109,12 @@ P4.store = {
 	Changes = function(changes)
 		for _, spec in ipairs(changes) do
 			P4.changes[spec.change] = spec
-			exec.describe({ change = spec.change }, function(change)
+			exec.describe({ change = spec.change, shelved = true, short = true }, function(change)
 				if change then
 					P4.changes[spec.change].shelved = change.files
 				end
 			end)
-			exec.opened({ change = spec.change }, function(files)
+			exec.opened({ change = spec.change, short = true }, function(files)
 				P4.changes[spec.change].opened = files
 			end)
 		end
@@ -192,14 +192,19 @@ P4.cmd = {
 	end,
 
 	Shelve = function(change)
-		exec.shelve({ change = change or P4.change, raw = true }, function(result)
+		change = change or P4.change
+		local client = P4.Change(change).client
+		exec.shelve({ client = client, change = change, raw = true }, function(result)
 			ui.notify(result)
 			P4.cmd.Refresh()
 		end)
 	end,
 
 	Unshelve = function(from, to)
-		exec.unshelve({ shelf = from or P4.change, change = to or P4.change, raw = true }, function(result)
+		from = from or P4.change
+		to = to or P4.change
+		local client = P4.Change(to).client
+		exec.unshelve({ client = client, shelf = from, change = to, raw = true }, function(result)
 			ui.notify(result)
 			P4.cmd.Refresh()
 		end)
@@ -213,7 +218,9 @@ P4.cmd = {
 	end,
 
 	DeleteShelf = function(change)
-		exec.shelve({ change = change or P4.Change().change, delete = true, raw = true }, function(result)
+		change = change or P4.change
+		local client = P4.Change(change).client
+		exec.shelve({ client = client, change = change, delete = true, raw = true }, function(result)
 			ui.notify(result)
 			P4.cmd.Refresh()
 		end)
@@ -267,7 +274,7 @@ P4.cmd = {
 	ViewChange = function(change)
 		exec.change({ stdout = true, change = change, raw = true }, function(change)
 			vim.schedule(function()
-				ui.view_change_spec(change)
+				ui.view_change(change)
 			end)
 		end)
 	end,
@@ -276,7 +283,7 @@ P4.cmd = {
 		exec.changes({ user = user or P4.user, status = "submitted", reverse = true, long = true }, function(result)
 			ui.select_change(result, { prompt = "Select change to view" }, function(change)
 				if change then
-					P4.cmd.ViewChange(change.change)
+					ui.view_change(change)
 				end
 			end)
 		end)
@@ -285,7 +292,7 @@ P4.cmd = {
 	ViewUsers = function()
 		ui.select_user(P4.Users(), nil, function(user)
 			if user then
-				P4.cmd.ViewChanges({ user = user.User })
+				P4.cmd.ViewChanges(user.User)
 			end
 		end)
 	end,
@@ -329,7 +336,7 @@ end
 P4.Status = function()
 	local client = P4.Client() or {}
 	local change = P4.Change() or {}
-	return client.client, client.Stream, change.change, change.desc
+	return client.client, client.Stream, change.change, change.desc, exec.Executing
 end
 
 return P4

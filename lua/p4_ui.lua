@@ -29,6 +29,22 @@ local fmt = {
 		local format = "󰞍 %s " .. icons[stream.type] or "" .. "%-20s"
 		return string.format(format, stream.stream, stream.parent)
 	end,
+
+	change_view = function(change)
+		local lines = {}
+		table.insert(lines, string.format("Change: %d (%s)", change.change, os.date("%Y-%m-%d %H:%M:%S", change.time)))
+		table.insert(lines, "")
+		table.insert(lines, string.format("Client: %s (%s)", change.client, change.user))
+		table.insert(lines, "")
+		table.insert(lines, "Description: ")
+		table.insert(lines, "")
+		for _, line in ipairs(vim.split(change.desc, "\n")) do
+			table.insert(lines, "\t" .. line)
+		end
+		table.insert(lines, "")
+		table.insert(lines, change.path)
+		return lines
+	end,
 }
 
 local itemizer = {
@@ -137,7 +153,7 @@ end
 
 M.view_change = function(change)
 	local buf = vim.api.nvim_create_buf(false, true)
-	vim.api.nvim_buf_set_lines(buf, 0, -1, false, vim.split(change.stdout, "\r\n"))
+	vim.api.nvim_buf_set_lines(buf, 0, -1, false, fmt.change_view(change))
 	vim.api.nvim_set_current_buf(buf)
 end
 

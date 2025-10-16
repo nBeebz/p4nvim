@@ -429,7 +429,8 @@ local parse = function(result, args, cmd)
 		if type(result) == "string" then
 			return vim.split(result, "\n")
 		else
-			return result
+			local msg = result.code == 0 and result.stdout or result.stderr
+			return msg
 		end
 	end
 	local parsed = {}
